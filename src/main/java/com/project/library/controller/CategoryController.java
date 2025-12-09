@@ -2,19 +2,18 @@ package com.project.library.controller;
 
 import com.project.library.entity.Category;
 import com.project.library.repository.CategoryRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/categories")
+@RequestMapping("/api/categories")
+@RequiredArgsConstructor
 public class CategoryController {
 
     private final CategoryRepository categoryRepository;
-
-    public CategoryController(CategoryRepository repo) {
-        this.categoryRepository = repo;
-    }
 
     @GetMapping
     public List<Category> getAll() {
@@ -22,8 +21,10 @@ public class CategoryController {
     }
 
     @GetMapping("/{id}")
-    public Category getById(@PathVariable Long id) {
-        return categoryRepository.findById(id).orElse(null);
+    public ResponseEntity<Category> getById(@PathVariable Long id) {
+        return categoryRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
@@ -32,13 +33,21 @@ public class CategoryController {
     }
 
     @PutMapping("/{id}")
-    public Category update(@PathVariable Long id, @RequestBody Category updated) {
-        updated.setId(id);
-        return categoryRepository.save(updated);
+    public ResponseEntity<Category> update(@PathVariable Long id, @RequestBody Category updated) {
+        return categoryRepository.findById(id)
+                .map(existing -> {
+                    existing.setName(updated.getName());
+                    return ResponseEntity.ok(categoryRepository.save(existing));
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        if (!categoryRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
         categoryRepository.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }

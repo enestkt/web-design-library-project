@@ -2,9 +2,11 @@ package com.project.library.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Data
+@NoArgsConstructor
 @Table(name = "categories")
 public class Category {
 
@@ -13,4 +15,9 @@ public class Category {
     private Long id;
 
     private String name;
+
+    // Tek parametreli constructor (manuel)
+    public Category(String name) {
+        this.name = name;
+    }
 }

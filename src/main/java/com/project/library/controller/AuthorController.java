@@ -2,19 +2,18 @@ package com.project.library.controller;
 
 import com.project.library.entity.Author;
 import com.project.library.repository.AuthorRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/authors")
+@RequestMapping("/api/authors")
+@RequiredArgsConstructor
 public class AuthorController {
 
     private final AuthorRepository authorRepository;
-
-    public AuthorController(AuthorRepository authorRepository) {
-        this.authorRepository = authorRepository;
-    }
 
     @GetMapping
     public List<Author> getAll() {
@@ -22,8 +21,10 @@ public class AuthorController {
     }
 
     @GetMapping("/{id}")
-    public Author getById(@PathVariable Long id) {
-        return authorRepository.findById(id).orElse(null);
+    public ResponseEntity<Author> getById(@PathVariable Long id) {
+        return authorRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
@@ -32,13 +33,21 @@ public class AuthorController {
     }
 
     @PutMapping("/{id}")
-    public Author update(@PathVariable Long id, @RequestBody Author updated) {
-        updated.setId(id);
-        return authorRepository.save(updated);
+    public ResponseEntity<Author> update(@PathVariable Long id, @RequestBody Author updated) {
+        return authorRepository.findById(id)
+                .map(existing -> {
+                    existing.setName(updated.getName());
+                    return ResponseEntity.ok(authorRepository.save(existing));
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        if (!authorRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
         authorRepository.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }

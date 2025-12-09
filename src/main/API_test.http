@@ -1,0 +1,39 @@
+### 1. ADIM: GİRİŞ YAP (Token Al)
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "enes@example.com",
+  "password": "123456"
+}
+
+###
+
+### 2. ADIM: GOOGLE'DAN KİTAP ÇEK (DOĞRU FORMAT — Body ile)
+POST http://localhost:8080/api/books/fetch-google
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJlbmVzQGV4YW1wbGUuY29tIiwiaWF0IjoxNzY1Mjg3MjgyLCJleHAiOjE3NjUzNzM2ODJ9.oo_ZGaD-ynqja7TogC_ODoQ_IyJVZ8h0RFiwwWVqc8E
+
+{
+  "isbn": "9780140328721"
+}
+
+###
+
+### 3. ADIM: KİTAP ÖDÜNÇ AL (bookId=1, userId=3 örnek)
+POST http://localhost:8080/api/loans/borrow/1/3
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJlbmVzQGV4YW1wbGUuY29tIiwiaWF0IjoxNzY1Mjg3MjgyLCJleHAiOjE3NjUzNzM2ODJ9.oo_ZGaD-ynqja7TogC_ODoQ_IyJVZ8h0RFiwwWVqc8E
+
+###
+
+### 4. ADIM: KİTAP İADE ET
+POST http://localhost:8080/api/loans/return/1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJlbmVzQGV4YW1wbGUuY29tIiwiaWF0IjoxNzY1Mjg3MjgyLCJleHAiOjE3NjUzNzM2ODJ9.oo_ZGaD-ynqja7TogC_ODoQ_IyJVZ8h0RFiwwWVqc8E
+
+###
+
+### 5. ADIM: KULLANICI ÖDÜNÇ GEÇMİŞİ
+GET http://localhost:8080/api/loans/user/1
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJlbmVzQGV4YW1wbGUuY29tIiwiaWF0IjoxNzY1Mjg3MjgyLCJleHAiOjE3NjUzNzM2ODJ9.oo_ZGaD-ynqja7TogC_ODoQ_IyJVZ8h0RFiwwWVqc8E

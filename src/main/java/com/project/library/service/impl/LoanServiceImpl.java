@@ -1,35 +1,39 @@
 package com.project.library.service.impl;
 
-import com.project.library.entity.*;
-import com.project.library.repository.*;
+import com.project.library.entity.Book;
+import com.project.library.entity.Loan;
+import com.project.library.entity.User;
+import com.project.library.repository.BookRepository;
+import com.project.library.repository.LoanRepository;
+import com.project.library.repository.UserRepository;
 import com.project.library.service.LoanService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 
 @Service
+@RequiredArgsConstructor
 public class LoanServiceImpl implements LoanService {
 
     private final LoanRepository loanRepository;
     private final UserRepository userRepository;
     private final BookRepository bookRepository;
 
-    public LoanServiceImpl(LoanRepository loanRepository, UserRepository userRepository, BookRepository bookRepository) {
-        this.loanRepository = loanRepository;
-        this.userRepository = userRepository;
-        this.bookRepository = bookRepository;
-    }
-
     @Override
     public Loan borrowBook(Long userId, Long bookId) {
-        User user = userRepository.findById(userId).orElse(null);
-        Book book = bookRepository.findById(bookId).orElse(null);
 
-        if (user == null || book == null || !book.isAvailable()) {
-            return null;
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new RuntimeException("Book not found"));
+
+        if (!book.isAvailable()) {
+            throw new RuntimeException("Book is already borrowed");
         }
 
-        // kitabı ödünç ver
+        // Kitabı ödünç ver
         book.setAvailable(false);
         bookRepository.save(book);
 
@@ -44,9 +48,9 @@ public class LoanServiceImpl implements LoanService {
 
     @Override
     public Loan returnBook(Long loanId) {
-        Loan loan = loanRepository.findById(loanId).orElse(null);
 
-        if (loan == null) return null;
+        Loan loan = loanRepository.findById(loanId)
+                .orElseThrow(() -> new RuntimeException("Loan record not found"));
 
         Book book = loan.getBook();
         book.setAvailable(true);
