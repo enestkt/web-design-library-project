@@ -71,10 +71,18 @@ public class LoanServiceImpl implements LoanService {
 
     @Override
     public List<LoanHistoryDto> getLoanHistory(Long userId) {
-
         return loanRepo.findByUserId(userId)
                 .stream()
                 .map(this::toHistory)
+                .collect(Collectors.toList());
+    }
+
+    // --- EKLEDİĞİMİZ YENİ METOD (DÜZELTİLMİŞ HALİ) ---
+    @Override
+    public List<LoanResponseDto> getAllLoans() {
+        return loanRepo.findAll()  // loanRepository değil, loanRepo
+                .stream()
+                .map(this::toResponse) // mapToLoanResponseDto değil, toResponse
                 .collect(Collectors.toList());
     }
 
@@ -82,7 +90,6 @@ public class LoanServiceImpl implements LoanService {
 
     private LoanResponseDto toResponse(Loan loan) {
         LoanResponseDto dto = new LoanResponseDto();
-
         dto.setId(loan.getId());
         dto.setUserId(loan.getUser().getId());
         dto.setBookId(loan.getBook().getId());
@@ -90,20 +97,17 @@ public class LoanServiceImpl implements LoanService {
         dto.setLoanDate(loan.getLoanDate().toString());
         dto.setReturnDate(loan.getReturnDate() != null ? loan.getReturnDate().toString() : null);
         dto.setStatus(loan.getStatus().toString());
-
         return dto;
     }
 
     private LoanHistoryDto toHistory(Loan loan) {
         LoanHistoryDto dto = new LoanHistoryDto();
-
         dto.setLoanId(loan.getId());
         dto.setBookId(loan.getBook().getId());
         dto.setBookTitle(loan.getBook().getTitle());
         dto.setLoanDate(loan.getLoanDate().toString());
         dto.setReturnDate(loan.getReturnDate() != null ? loan.getReturnDate().toString() : null);
         dto.setStatus(loan.getStatus().toString());
-
         return dto;
     }
 }

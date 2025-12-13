@@ -30,4 +30,11 @@ public class LoanController {
     public List<LoanHistoryDto> history(@PathVariable Long userId) {
         return loanService.getLoanHistory(userId);
     }
+
+    // --- DÜZELTİLEN KISIM ---
+    // Dashboard'un çağırdığı liste burası
+    @GetMapping
+    public List<LoanResponseDto> getAllLoans() {
+        return loanService.getAllLoans();
+    }
 }

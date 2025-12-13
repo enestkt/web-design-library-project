@@ -12,5 +12,8 @@ public interface LoanService {
 
     LoanResponseDto returnBook(Long loanId);
 
+    // Yeni eklenen metod
+    List<LoanResponseDto> getAllLoans();
+
     List<LoanHistoryDto> getLoanHistory(Long userId);
 }

@@ -9,4 +9,5 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     long countByAvailable(boolean available);
     long countByCategory(Category category);
     long countByAuthor(Author author);
+    boolean existsByIsbn(String isbn);
 }

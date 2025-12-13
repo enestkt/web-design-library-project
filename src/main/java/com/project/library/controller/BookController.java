@@ -50,10 +50,29 @@ public class BookController {
         bookService.deleteBook(id);
     }
 
-    // ⭐ Google Books API üzerinden kitap ekleme
+    // ⭐ Google Books API üzerinden TEK kitap ekleme (Manuel ISBN ile)
     @PostMapping("/fetch-google")
     public BookResponseDto fetchFromGoogle(@RequestBody Map<String, String> body) {
         String isbn = body.get("isbn");
         return externalBookService.fetchFromGoogle(isbn);
+    }
+
+    // ⭐⭐ YENİ EKLENEN: Veritabanını Otomatik Doldur (Toplu Ekleme)
+    // Tarayıcıdan http://localhost:8080/api/books/init adresine gidince çalışır.
+    @GetMapping("/init")
+    public String initializeBooks() {
+        // Eğer Interface'e methodu eklemediysen hata vermesin diye casting yapıyoruz
+        if (externalBookService instanceof com.project.library.service.impl.ExternalBookServiceImpl) {
+            var service = (com.project.library.service.impl.ExternalBookServiceImpl) externalBookService;
+
+            // Farklı kategorilerden kitaplar çek
+            service.fetchAndSaveBooks("history");     // Tarih kitapları
+            service.fetchAndSaveBooks("science");     // Bilim kitapları
+            service.fetchAndSaveBooks("computers");   // Bilgisayar kitapları
+            service.fetchAndSaveBooks("fantasy");     // Fantastik kitaplar
+
+            return "Başarılı! Veritabanına History, Science, Computers ve Fantasy kategorilerinde gerçek kitaplar eklendi.";
+        }
+        return "Hata: ExternalBookService implementasyonu bulunamadı veya interface uyumsuz.";
     }
 }
