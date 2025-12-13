@@ -1,17 +1,19 @@
 package com.project.library.service;
 
-import com.project.library.entity.Book;
+import com.project.library.dto.book.BookRequestDto;
+import com.project.library.dto.book.BookResponseDto;
+
 import java.util.List;
 
 public interface BookService {
 
-    List<Book> getAllBooks();
+    List<BookResponseDto> getAllBooks();
 
-    Book getBook(Long id);
+    BookResponseDto getBook(Long id);
 
-    Book addBook(Book book);
+    BookResponseDto addBook(BookRequestDto dto);
+
+    BookResponseDto updateBook(Long id, BookRequestDto dto);
 
     void deleteBook(Long id);
-
-    Book updateBook(Long id, Book book);
 }

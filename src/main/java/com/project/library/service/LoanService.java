@@ -1,10 +1,16 @@
 package com.project.library.service;
 
-import com.project.library.entity.Loan;
+import com.project.library.dto.loan.LoanHistoryDto;
+import com.project.library.dto.loan.LoanRequestDto;
+import com.project.library.dto.loan.LoanResponseDto;
+
+import java.util.List;
 
 public interface LoanService {
 
-    Loan borrowBook(Long userId, Long bookId);
+    LoanResponseDto borrowBook(LoanRequestDto dto);
 
-    Loan returnBook(Long loanId);
+    LoanResponseDto returnBook(Long loanId);
+
+    List<LoanHistoryDto> getLoanHistory(Long userId);
 }

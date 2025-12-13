@@ -13,7 +13,10 @@ public class Book {
     private Long id;
     private String isbn;
     private String title;
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String description;
+
     private String imageUrl;
 
     private boolean available = true;

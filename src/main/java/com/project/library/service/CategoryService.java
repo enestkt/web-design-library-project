@@ -1,9 +1,19 @@
 package com.project.library.service;
 
-import com.project.library.entity.Category;
+import com.project.library.dto.category.CategoryRequestDto;
+import com.project.library.dto.category.CategoryResponseDto;
+
 import java.util.List;
 
 public interface CategoryService {
-    List<Category> getAllCategories();
-    Category addCategory(Category category);
+
+    CategoryResponseDto createCategory(CategoryRequestDto dto);
+
+    CategoryResponseDto getCategory(Long id);
+
+    List<CategoryResponseDto> getAllCategories();
+
+    CategoryResponseDto updateCategory(Long id, CategoryRequestDto dto);
+
+    void deleteCategory(Long id);
 }

@@ -1,9 +1,9 @@
 package com.project.library.controller;
 
-import com.project.library.entity.Category;
-import com.project.library.repository.CategoryRepository;
+import com.project.library.dto.category.CategoryRequestDto;
+import com.project.library.dto.category.CategoryResponseDto;
+import com.project.library.service.CategoryService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,41 +13,30 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CategoryController {
 
-    private final CategoryRepository categoryRepository;
+    private final CategoryService categoryService;
 
     @GetMapping
-    public List<Category> getAll() {
-        return categoryRepository.findAll();
+    public List<CategoryResponseDto> getAll() {
+        return categoryService.getAllCategories();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Category> getById(@PathVariable Long id) {
-        return categoryRepository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public CategoryResponseDto getById(@PathVariable Long id) {
+        return categoryService.getCategory(id);
     }
 
     @PostMapping
-    public Category add(@RequestBody Category category) {
-        return categoryRepository.save(category);
+    public CategoryResponseDto create(@RequestBody CategoryRequestDto dto) {
+        return categoryService.createCategory(dto);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Category> update(@PathVariable Long id, @RequestBody Category updated) {
-        return categoryRepository.findById(id)
-                .map(existing -> {
-                    existing.setName(updated.getName());
-                    return ResponseEntity.ok(categoryRepository.save(existing));
-                })
-                .orElse(ResponseEntity.notFound().build());
+    public CategoryResponseDto update(@PathVariable Long id, @RequestBody CategoryRequestDto dto) {
+        return categoryService.updateCategory(id, dto);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        if (!categoryRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
-        }
-        categoryRepository.deleteById(id);
-        return ResponseEntity.noContent().build();
+    public void delete(@PathVariable Long id) {
+        categoryService.deleteCategory(id);
     }
 }

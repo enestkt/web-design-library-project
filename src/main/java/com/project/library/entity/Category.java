@@ -14,9 +14,9 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, unique = true)
     private String name;
 
-    // Tek parametreli constructor (manuel)
     public Category(String name) {
         this.name = name;
     }
