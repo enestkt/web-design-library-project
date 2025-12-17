@@ -20,10 +20,24 @@
             padding: 12px 20px;
             display: block;
             text-decoration: none;
+            transition: 0.3s;
         }
         .sidebar a:hover {
             background: #333;
             color: white;
+        }
+
+        /* React Butonu İçin Özel Stil */
+        .react-link {
+            margin-top: 20px;
+            background: rgba(13, 202, 240, 0.1);
+            color: #0dcaf0 !important;
+            border-left: 4px solid #0dcaf0;
+            font-weight: bold;
+        }
+        .react-link:hover {
+            background: #0dcaf0 !important;
+            color: #000 !important;
         }
 
         .content {
@@ -47,17 +61,21 @@
 
 <body>
 
-<!-- Sidebar -->
 <div class="sidebar">
     <h4 class="text-center">Admin Panel</h4>
+    <hr style="border-color: #555;">
+
     <a href="/admin/dashboard">Dashboard</a>
     <a href="/admin/books">Books</a>
     <a href="/admin/categories">Categories</a>
     <a href="/admin/authors">Authors</a>
     <a href="/admin/loans">Loans</a>
+
+    <a href="http://localhost:3000" target="_blank" class="react-link">
+        🚀 Go to React App
+    </a>
 </div>
 
-<!-- Content -->
 <div class="content">
 
     <div class="title">Dashboard Summary</div>
