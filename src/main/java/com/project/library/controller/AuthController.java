@@ -1,9 +1,12 @@
 package com.project.library.controller;
 
+import com.project.library.dto.auth.AuthLoginRequest;
+import com.project.library.dto.auth.AuthRegisterRequest;
 import com.project.library.entity.User;
 import com.project.library.entity.Role;
 import com.project.library.repository.UserRepository;
 import com.project.library.security.JwtUtils;
+import jakarta.validation.Valid; // ⭐ Validasyon importu
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,22 +23,19 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
 
-    // REGISTER
+    // REGISTER - @Valid ve DTO Kullanımı
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody Map<String, String> req) {
+    public ResponseEntity<?> register(@RequestBody @Valid AuthRegisterRequest req) {
 
-        String name = req.get("name");
-        String email = req.get("email");
-        String password = req.get("password");
-
-        if (userRepository.findByEmail(email).isPresent()) {
+        // Validasyon başarılıysa buraya girer
+        if (userRepository.findByEmail(req.getEmail()).isPresent()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Email already exists"));
         }
 
         User user = User.builder()
-                .name(name)
-                .email(email)
-                .password(passwordEncoder.encode(password))
+                .name(req.getName())      // DTO'dan alıyoruz
+                .email(req.getEmail())    // DTO'dan alıyoruz
+                .password(passwordEncoder.encode(req.getPassword())) // DTO'dan alıyoruz
                 .role(Role.USER)
                 .build();
 
@@ -51,19 +51,20 @@ public class AuthController {
         );
 
         return ResponseEntity.ok(Map.of(
-                "message", "User registered",
+                "message", "User registered successfully",
                 "token", token,
                 "userId", user.getId(),
                 "role", "USER"
         ));
     }
 
-    // LOGIN
+    // LOGIN - Tutarlılık için burayı da DTO yapabiliriz ama Map de kalabilir.
+    // Düzgün olması için AuthLoginRequest kullanıyorum.
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
+    public ResponseEntity<?> login(@RequestBody AuthLoginRequest req) {
 
-        String email = body.get("email");
-        String password = body.get("password");
+        String email = req.getEmail();
+        String password = req.getPassword();
 
         return userRepository.findByEmail(email)
                 .map(user -> {
@@ -72,7 +73,7 @@ public class AuthController {
                                 .body(Map.of("error", "Invalid password"));
                     }
 
-                    // ROLE_ prefix eklemezsen Spring kabul etmiyor
+                    // ROLE_ prefix eklemezsen Spring Security yetkilendirmesi çalışmaz
                     String role = "ROLE_" + user.getRole().name();
 
                     String token = jwtUtils.generateToken(
@@ -94,5 +95,4 @@ public class AuthController {
                 .orElse(ResponseEntity.status(404)
                         .body(Map.of("error", "User not found")));
     }
-
 }
