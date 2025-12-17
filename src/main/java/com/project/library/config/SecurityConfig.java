@@ -108,7 +108,7 @@ public class SecurityConfig {
         // Hem Lokalde hem Canlıda (Render) React'in erişimine izin veriyoruz
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:3000",             // Lokal React
-                "https://library-app.onrender.com"   // İlerdeki Canlı React Adresin (Render)
+                "https://library-management-frontend-murex.vercel.app"   // İlerdeki Canlı React Adresin
         ));
 
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
