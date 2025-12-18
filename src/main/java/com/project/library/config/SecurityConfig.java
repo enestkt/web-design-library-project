@@ -62,27 +62,37 @@ public class SecurityConfig {
     @Order(2)
     public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/api/**")
+                // Kapsamı API ve statik dosyalar olarak belirliyoruz
+                .securityMatcher("/api/**", "/manifest.json", "/favicon.ico", "/*.png")
                 .csrf(AbstractHttpConfigurer::disable)
+                // CORS yapılandırmasını aşağıda tanımladığımız metottan alıyor
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
+                        // Statik dosyalara ve Auth endpointlerine şartsız izin ver (401 hatasını çözer)
+                        .requestMatchers("/manifest.json", "/favicon.ico", "/*.png").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
+
+                        // Kitap görüntüleme herkese açık
                         .requestMatchers(HttpMethod.GET, "/api/books/**").permitAll()
-                        // Rol kontrolleri
+
+                        // Rol bazlı kısıtlamalar
                         .requestMatchers(HttpMethod.POST, "/api/books/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/books/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/books/**").hasRole("ADMIN")
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
                         .requestMatchers("/api/loans/borrow/**").hasAnyRole("ADMIN", "USER")
                         .requestMatchers("/api/loans/return/**").hasRole("ADMIN")
+
+                        // Geri kalan tüm API istekleri geçerli JWT gerektirir
                         .anyRequest().authenticated()
                 )
-                // JWT için Stateless yapıyoruz
+                // JWT tabanlı olduğu için oturum tutmuyoruz
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
-
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -104,10 +114,18 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
+
+        configuration.setAllowedOriginPatterns(List.of(
+                "http://localhost:3000",
+                "https://library-management-frontend-murex.vercel.app",
+                "https://library-management-frontend-*-enes-projects-92ba26df.vercel.app" // Preview adresleri için wildcard
+        ));
+
         configuration.setAllowedOrigins(List.of("http://localhost:3000", "https://library-management-frontend-murex.vercel.app"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
