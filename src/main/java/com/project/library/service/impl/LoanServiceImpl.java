@@ -92,7 +92,7 @@ public class LoanServiceImpl implements LoanService {
         LoanResponseDto dto = new LoanResponseDto();
         dto.setId(loan.getId());
         dto.setUserId(loan.getUser().getId());
-        dto.setBookId(loan.getBook().getId());
+        dto.setUserName(loan.getUser().getName());
         dto.setBookTitle(loan.getBook().getTitle());
         dto.setLoanDate(loan.getLoanDate().toString());
         dto.setReturnDate(loan.getReturnDate() != null ? loan.getReturnDate().toString() : null);
@@ -105,6 +105,7 @@ public class LoanServiceImpl implements LoanService {
         dto.setLoanId(loan.getId());
         dto.setBookId(loan.getBook().getId());
         dto.setBookTitle(loan.getBook().getTitle());
+        dto.setUserName(loan.getUser().getName());
         dto.setLoanDate(loan.getLoanDate().toString());
         dto.setReturnDate(loan.getReturnDate() != null ? loan.getReturnDate().toString() : null);
         dto.setStatus(loan.getStatus().toString());
