@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -31,23 +32,21 @@ public class SecurityConfig {
     private final CustomUserDetailsService customUserDetailsService;
     private final JwtAuthFilter jwtAuthFilter;
 
-    // --- 1. FİLTRE: ADMIN PANELİ & WEB SAYFALARI (Thymeleaf - Session Tabanlı) ---
+    // --- 1. FİLTRE: ADMIN PANELİ & WEB SAYFALARI (Thymeleaf - Mevcut yapı bozulmasın diye tutuldu) ---
     @Bean
     @Order(1)
     public SecurityFilterChain adminFilterChain(HttpSecurity http) throws Exception {
         http
-                // Bu zincir sadece admin paneli, login sayfası ve statik dosyalar (css/js) için çalışır
                 .securityMatcher("/admin/**", "/login", "/css/**", "/js/**", "/images/**", "/")
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/css/**", "/js/**", "/images/**", "/").permitAll() // Giriş ve statik kaynaklar serbest
-                        .requestMatchers("/admin/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER") // Admin paneline kimler girebilir
+                        .requestMatchers("/login", "/css/**", "/js/**", "/images/**", "/").permitAll()
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
-                        .loginPage("/login") // Backend'deki templates/login.html
-                        .loginProcessingUrl("/login") // Formun POST edileceği yer
-                        .defaultSuccessUrl("/", true) // Başarılı girişte ana sayfaya git
+                        .loginPage("/login")
+                        .defaultSuccessUrl("/", true)
                         .permitAll()
                 )
                 .logout(logout -> logout
@@ -59,22 +58,39 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // --- 2. FİLTRE: API (React - JWT Tabanlı) ---
+    // --- 2. FİLTRE: API (React - JWT Tabanlı - ASIL DÜZELTME BURADA) ---
     @Bean
     @Order(2)
     public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
         http
-                // /api ile başlayan her şey ve Swagger bu zincire girer
                 .securityMatcher("/api/**", "/swagger-ui/**", "/v3/api-docs/**")
                 .csrf(AbstractHttpConfigurer::disable)
-                // CORS ayarını burada bağlıyoruz (Aşağıdaki metodu kullanır)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/api/books/init").permitAll() // Auth ve Init serbest
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll() // Swagger dokümanı serbest
-                        .anyRequest().authenticated() // Diğer tüm API istekleri token ister
+                        // Herkese açık API'ler
+                        .requestMatchers("/api/auth/**", "/api/books/init").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+
+                        // Kitap İşlemleri: Görme herkes, değiştirme sadece ADMIN
+                        .requestMatchers(HttpMethod.GET, "/api/books/**").hasAnyRole("ADMIN", "USER")
+                        .requestMatchers(HttpMethod.POST, "/api/books/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/books/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/books/**").hasRole("ADMIN")
+
+                        // Kullanıcı Yönetimi: Sadece ADMIN
+                        .requestMatchers("/api/users/**").hasRole("ADMIN")
+
+                        // Ödünç Alma: Hem USER hem ADMIN yapabilir (Self-Service)
+                        .requestMatchers("/api/loans/borrow/**").hasAnyRole("ADMIN", "USER")
+
+                        // İade İşlemi: Sadece ADMIN (Kitabı teslim eden yetkili olmalı)
+                        .requestMatchers("/api/loans/return/**").hasRole("ADMIN")
+
+                        // Geçmiş Görüntüleme: Giriş yapan herkes kendi bilgisini görebilir
+                        .requestMatchers("/api/loans/user/**").authenticated()
+
+                        .anyRequest().authenticated()
                 )
-                // API'de Session tutmuyoruz (Stateless)
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
@@ -100,17 +116,13 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
-    // ⭐ KRİTİK AYAR: CORS YAPILANDIRMASI ⭐
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-
-        // Hem Lokalde hem Canlıda (Render) React'in erişimine izin veriyoruz
         configuration.setAllowedOrigins(List.of(
-                "http://localhost:3000",             // Lokal React
-                "https://library-management-frontend-murex.vercel.app"   // İlerdeki Canlı React Adresin
+                "http://localhost:3000",
+                "https://library-management-frontend-murex.vercel.app"
         ));
-
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
