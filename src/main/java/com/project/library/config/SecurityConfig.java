@@ -32,15 +32,15 @@ public class SecurityConfig {
     private final CustomUserDetailsService customUserDetailsService;
     private final JwtAuthFilter jwtAuthFilter;
 
-    // --- 1. FİLTRE: ADMIN PANELİ & WEB SAYFALARI (Thymeleaf - Mevcut yapı bozulmasın diye tutuldu) ---
+    // --- 1. FİLTRE: THYMELEAF (Hocanın istediği kısım) ---
     @Bean
     @Order(1)
     public SecurityFilterChain adminFilterChain(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/admin/**", "/login", "/css/**", "/js/**", "/images/**", "/")
-                .csrf(AbstractHttpConfigurer::disable)
+                .securityMatcher("/admin/**", "/login", "/logout", "/", "/css/**", "/js/**")
+                .csrf(AbstractHttpConfigurer::disable) // Basitlik için kapattık, gerekirse açılabilir
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/css/**", "/js/**", "/images/**", "/").permitAll()
+                        .requestMatchers("/login", "/css/**", "/js/**", "/").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
@@ -52,45 +52,30 @@ public class SecurityConfig {
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout")
-                        .permitAll()
                 );
 
         return http.build();
     }
 
-    // --- 2. FİLTRE: API (React - JWT Tabanlı - ASIL DÜZELTME BURADA) ---
+    // --- 2. FİLTRE: API / REACT (JWT Tabanlı) ---
     @Bean
     @Order(2)
     public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/api/**", "/swagger-ui/**", "/v3/api-docs/**")
+                .securityMatcher("/api/**")
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        // Herkese açık API'ler
-                        .requestMatchers("/api/auth/**", "/api/books/init").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-
-                        // Kitap İşlemleri: Görme herkes, değiştirme sadece ADMIN
-                        .requestMatchers(HttpMethod.GET, "/api/books/**").hasAnyRole("ADMIN", "USER")
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/books/**").permitAll()
+                        // Rol kontrolleri
                         .requestMatchers(HttpMethod.POST, "/api/books/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/books/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/books/**").hasRole("ADMIN")
-
-                        // Kullanıcı Yönetimi: Sadece ADMIN
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
-
-                        // Ödünç Alma: Hem USER hem ADMIN yapabilir (Self-Service)
                         .requestMatchers("/api/loans/borrow/**").hasAnyRole("ADMIN", "USER")
-
-                        // İade İşlemi: Sadece ADMIN (Kitabı teslim eden yetkili olmalı)
                         .requestMatchers("/api/loans/return/**").hasRole("ADMIN")
-
-                        // Geçmiş Görüntüleme: Giriş yapan herkes kendi bilgisini görebilir
-                        .requestMatchers("/api/loans/user/**").authenticated()
-
                         .anyRequest().authenticated()
                 )
+                // JWT için Stateless yapıyoruz
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
@@ -119,14 +104,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(
-                "http://localhost:3000",
-                "https://library-management-frontend-murex.vercel.app"
-        ));
+        configuration.setAllowedOrigins(List.of("http://localhost:3000", "https://library-management-frontend-murex.vercel.app"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
-
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
